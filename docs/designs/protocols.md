@@ -1,25 +1,128 @@
-# Flexi: Share with Simplicity
+## Architecture
 
-The Flexi Sharing App is a lightweight and versatile Java application that facilitates seamless sharing of files, clipboard content, and messages between connected devices using TCP protocols. This user-friendly application simplifies the process of sharing various types of data, making collaboration and communication more efficient and effective.
+The architecture of Flexi revolves around a Client-Server model, where each device can assume the role of either a server or a client, but not both simultaneously. When a device is designated as a server, it acts as the central hub for receiving data packets from other clients within the local network. The server then distributes this data to all connected clients, facilitating seamless clipboard synchronization across devices. Additionally, the server has the option to exclude sending data back to the originating client, which can be useful in certain scenarios to avoid unnecessary duplication of clipboard content.
 
-## Features
+This architecture ensures efficient and organized communication between devices, allowing for automatic clipboard synchronization without requiring manual intervention. With the ability to switch roles between server and client as needed, Flexi offers flexibility and adaptability to accommodate various network setups and configurations. Whether you're copying text, images, or other data, Flexi's Client-Server architecture guarantees smooth clipboard sharing and enhances productivity in a connected environment.
 
-- **File Sharing**: Easily transfer files of any format and size between devices.
-- Whether you need to share documents, images, or any other files, the Flexi
-Sharing App ensures quick and reliable file transfer.
+## Discovering Devices
 
-- **Clipboard Sharing**: Copy text or images to your clipboard on one device and instantly paste it on another.
-- This feature is incredibly handy for sharing code snippets, URLs, or any other content without the hassle of manual typing.
+Flexi utilizes a discovery mechanism to identify compatible devices within the local network by utilizing the mdns protocol. This mechanism allows the client to discover the server without requiring the user to manually enter the IP address and port number.
 
-- **Message Sharing**: Communicate in real-time by sending messages between connected devices.
-- Whether it's a quick note or a detailed message, the Flexi
-Sharing App keeps you connected and informed.
+## Protocol
 
-- **Cross-Platform Compatibility**: The app is designed to work seamlessly across various platforms, including Windows, macOS, and Linux,
-- ensuring that you can share and collaborate regardless of your operating system.
+Flexi utilizes the TCP/IP protocol for reliable communication between devices. The packets transmitted within the application are in binary format, consisting of a header and a body. The header contains essential information about the packet, such as its type and additional metadata. The body of the packet contains the actual data being transmitted, which typically includes clipboard content. By employing TCP/IP, Flexi ensures that the packets are sent and received accurately, enabling seamless clipboard synchronization between devices. The use of a structured packet format with a header and body allows for efficient and organized data transmission within the application.
 
-- **Simple and Intuitive Interface**: The user-friendly interface makes it easy for users of all levels to
-- quickly grasp and utilize the app's features.
+## Security
 
-- **Secure Communication**: The app employs TCP protocols to ensure secure and 
-- reliable data transfer between devices, safeguarding your information throughout the sharing process.
+Flexi uses TLS over TCP to ensure secure communication between devices. TLS provides end-to-end encryption, preventing unauthorized access to the data being transmitted. This security mechanism ensures that the clipboard content is protected from malicious attacks and other security threats, allowing for safe and secure clipboard synchronization across devices. By utilizing TLS over TCP, Flexi guarantees that the clipboard data is transmitted securely and reliably, enhancing the overall user experience.
+
+## Packet Types
+
+Flexi utilizes a variety of packet types for different purposes. These packet types include the broadcast packet, Flexi packet, and others, each serving a specific function within the application. Below, we provide a detailed description of each packet type and its intended usage in Flexi.
+
+### What are the packets Required for Flexi
+
+Once the server has been identified, clipboard data is transmitted between the client and the server using a single type of packet known as the **SyncingPacket**. This packet is responsible for transferring clipboard data from the client to the server and vice versa, ensuring seamless sharing of clipboard content between the two devices.
+
+Finally we have **InvalidRequest** which is used to indicate that the packet sent by client is invalid so it provides a way to indicate that the packet status. This packet should only sent from server to client not from client to server.
+
+#### Packet Length
+
+The **Packet Length** field specifies the length of the packet, which is the sum of the length of the header and the length of the body. This field is used to determine the size of the packet, allowing for efficient and organized data transmission within the application. This field is First field in all of the packets.
+
+### InvalidRequest
+
+The **InvalidRequest** is used to indicate that the packet is invalid. This packet contains the following fields:
+
+#### Header
+
+- **Packet Length**: This field specifies the length of the packet, for invalid packet it is length of error code and error message.
+- **Packet Type**: This field specifies the type of packet, which is set to 0x00 for the Invalid Packet.
+
+#### Body
+
+- **Error Code**: This field specifies the error code.
+- **Error Message**: This field contains the error message.
+
+#### Structure
+
+| Field           | Bytes  | value |
+|-----------------|--------| ----- |
+| Packet Length   | 4      |       |
+| Packet Type     | 1      | 0x00  |
+| Error Code      | 1      |       |
+| Error Message   | varies |       |
+
+#### Possible Error Codes
+
+| Error Code | Error Message |
+|------------|---------------|
+| 0x01       | Coding Error  |
+| 0x02       | TLS Error     |
+
+### Authentication
+
+The **Authentication** is used to indicate the authentication process to the client. This packet contains the following fields:
+
+#### Header
+
+- **Packet Length**: This field specifies the length of the packet, for AuthPacket it is length of the auth token.
+- **Packet Type**: This field specifies the type of packet, which is set to 0x01 for the AuthPacket.
+
+#### Body
+
+- **AuthStatus**: This field specifies the status of the authentication process. it can be one of the following values.
+    - 0x00: Auth Failed
+    - 0x01: Auth Success
+
+#### Structure
+
+| Field           | Bytes | value |
+|-----------------|-------| ----- |
+| Packet Length   | 4     |       |
+| Packet Type     | 1     | 0x01  |
+| AuthStatus      | 1     |       |
+
+### SyncingPacket
+
+The **SyncingPacket** is used to transfer clipboard data between the client and the server. This packet contains the following fields:
+
+#### Header
+
+- **Packet Length**: This field specifies the length of the packet, for SyncingPacket it is length of clipboard data and type of clipboard data.
+- **Packet Type**: This field specifies the type of packet, which is set to 0x02 for the SyncingPacket.
+
+#### Body
+
+- **itemCount**: This field specifies the number of items in the clipboard and the following fields are repeated for each item.
+- **MimeLength**: This field specifies the length of the clipboard data type.
+- **MimeType**: This field contains the type of clipboard data, which can be text, image, or other data, asper mime type.
+- **PayloadLength**: This field specifies the length of the clipboard data.
+- **Payload**: This field contains the actual clipboard data.
+
+#### Structure
+
+| Field           | Bytes | value |
+|-----------------|-------| ----- |
+| Packet Length   | 4     |       |
+| Packet Type     | 1     | 0x02  |
+| itemCount       | 4     |       |
+| MimeLength      | 4     |       |
+| MimeType        | varies|       |
+| PayloadLength   | 4     |       |
+| Payload         | varies|       |
+| MimeLength      | 4     |       |
+| MimeType        | varies|       |
+| PayloadLength   | 4     |       |
+| Payload         | varies|       |
+| ...             | ...   | ...   |
+
+#### Supported Data Types
+
+| Description |
+|:-----------:|
+|    Text     |
+|    Image    |
+|    URL's    |
+|    Color    |
+|    HTML     |
