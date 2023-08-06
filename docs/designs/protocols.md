@@ -1,28 +1,24 @@
 ## Architecture
 
-The architecture of Flexi revolves around a Client-Server model, where each device can assume the role of either a server or a client, but not both simultaneously. When a device is designated as a server, it acts as the central hub for receiving data packets from other clients within the local network. The server then distributes this data to all connected clients, facilitating seamless clipboard synchronization across devices. Additionally, the server has the option to exclude sending data back to the originating client, which can be useful in certain scenarios to avoid unnecessary duplication of clipboard content.
+The architecture of Flexi revolves around a Client-Server model, where each device can assume the role of either a server or a client, but not both simultaneously. When a device is designated as a server, it generates a QR code with ip and port information.
 
-This architecture ensures efficient and organized communication between devices, allowing for automatic clipboard synchronization without requiring manual intervention. With the ability to switch roles between server and client as needed, Flexi offers flexibility and adaptability to accommodate various network setups and configurations. Whether you're copying text, images, or other data, Flexi's Client-Server architecture guarantees smooth clipboard sharing and enhances productivity in a connected environment.
-
-## Discovering Devices
-
-Flexi utilizes a discovery mechanism to identify compatible devices within the local network by utilizing the mdns protocol. This mechanism allows the client to discover the server without requiring the user to manually enter the IP address and port number.
+This architecture ensures efficient and organized communication between devices. Device acting as the client contains a QR scanner to ensure quick connections
 
 ## Protocol
 
-Flexi utilizes the TCP/IP protocol for reliable communication between devices. The packets transmitted within the application are in binary format, consisting of a header and a body. The header contains essential information about the packet, such as its type and additional metadata. The body of the packet contains the actual data being transmitted, which typically includes clipboard content. By employing TCP/IP, Flexi ensures that the packets are sent and received accurately, enabling seamless clipboard synchronization between devices. The use of a structured packet format with a header and body allows for efficient and organized data transmission within the application.
+Flexi utilizes the TCP/IP protocol for reliable communication between devices. The packets transmitted within the application are in binary format, consisting of a header and a body. The header contains essential information about the packet, such as its type and additional metadata. The body of the packet contains the actual data being transmitted, which typically includes Selected content. 
 
 ## Security
 
-Flexi uses TLS over TCP to ensure secure communication between devices. TLS provides end-to-end encryption, preventing unauthorized access to the data being transmitted. This security mechanism ensures that the clipboard content is protected from malicious attacks and other security threats, allowing for safe and secure clipboard synchronization across devices. By utilizing TLS over TCP, Flexi guarantees that the clipboard data is transmitted securely and reliably, enhancing the overall user experience.
+Flexi uses TLS over TCP to ensure secure communication between devices. TLS provides end-to-end encryption, preventing unauthorized access to the data being transmitted. This security mechanism ensures that the shared content is protected from malicious attacks and other security threats, allowing for safe and secure data transfer across devices. By utilizing TLS over TCP, Flexi guarantees that the data is transmitted securely and reliably, enhancing the overall user experience.
 
 ## Packet Types
 
-Flexi utilizes a variety of packet types for different purposes. These packet types include the broadcast packet, Flexi packet, and others, each serving a specific function within the application. Below, we provide a detailed description of each packet type and its intended usage in Flexi.
+Flexi utilizes a variety of packet types for different purposes. These packet types include the request packet, data packet, and others, each serving a specific function within the application. Below, we provide a detailed description of each packet type and its intended usage in Flexi.
 
 ### What are the packets Required for Flexi
 
-Once the server has been identified, clipboard data is transmitted between the client and the server using a single type of packet known as the **SyncingPacket**. This packet is responsible for transferring clipboard data from the client to the server and vice versa, ensuring seamless sharing of clipboard content between the two devices.
+Once the server and client are connected,  data is transmitted between the client and the server using a single type of packet known as the **DataPacket**. This packet is responsible for transferring  data from the client to the server and vice versa. 
 
 Finally we have **InvalidRequest** which is used to indicate that the packet sent by client is invalid so it provides a way to indicate that the packet status. This packet should only sent from server to client not from client to server.
 
@@ -83,18 +79,16 @@ The **Authentication** is used to indicate the authentication process to the cli
 | Packet Type     | 1     | 0x01  |
 | AuthStatus      | 1     |       |
 
-### SyncingPacket
+### DataPacket
 
-The **SyncingPacket** is used to transfer clipboard data between the client and the server. This packet contains the following fields:
+The **SyncingPacket** is used to transfer  data between the client and the server. This packet contains the following fields:
 
 #### Header
 
-- **Packet Length**: This field specifies the length of the packet, for SyncingPacket it is length of clipboard data and type of clipboard data.
+- **Packet Length**: This field specifies the length of the packet, for SyncingPacket it is length of  data and type of  data.
 - **Packet Type**: This field specifies the type of packet, which is set to 0x02 for the SyncingPacket.
 
 #### Body
-
-- **itemCount**: This field specifies the number of items in the clipboard and the following fields are repeated for each item.
 - **MimeLength**: This field specifies the length of the clipboard data type.
 - **MimeType**: This field contains the type of clipboard data, which can be text, image, or other data, asper mime type.
 - **PayloadLength**: This field specifies the length of the clipboard data.
@@ -106,7 +100,6 @@ The **SyncingPacket** is used to transfer clipboard data between the client and 
 |-----------------|-------| ----- |
 | Packet Length   | 4     |       |
 | Packet Type     | 1     | 0x02  |
-| itemCount       | 4     |       |
 | MimeLength      | 4     |       |
 | MimeType        | varies|       |
 | PayloadLength   | 4     |       |
@@ -118,11 +111,5 @@ The **SyncingPacket** is used to transfer clipboard data between the client and 
 | ...             | ...   | ...   |
 
 #### Supported Data Types
-
-| Description |
-|:-----------:|
-|    Text     |
-|    Image    |
-|    URL's    |
-|    Color    |
-|    HTML     |
+    -All file types and formats are supported 
+    
